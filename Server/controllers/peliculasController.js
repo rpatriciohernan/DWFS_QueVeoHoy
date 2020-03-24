@@ -110,6 +110,55 @@ class Controller {
         }
     });
   }
+
+  getPeliculaById(req, res){
+
+    const sentenceGetPelicula = "SELECT * FROM QUEVEOHOY.pelicula WHERE id="+parseInt(req.params.id);
+
+    db.query(sentenceGetPelicula, function(error,peliculaResult, fields){
+      if(error){
+        console.log("Error found at Get Pelicula by ID query", error.message);
+        return res.status(404).send("Pelicula not found");
+      }else{
+        const pelicula = peliculaResult[0];
+        
+        const sentenceGetGenero = "SELECT nombre FROM genero WHERE id="+parseInt(pelicula.genero_id);
+
+        db.query(sentenceGetGenero, function(error, generoResult, fields){
+          if(error){
+            console.log("Error found at Get Genero query", error.message);
+            return res.status(404).send("Genero not found");
+          }else{
+            const genero = generoResult[0].nombre;
+
+            const sentenceGetActores = "SELECT nombre FROM actor A INNER JOIN (SELECT * FROM actor_pelicula WHERE pelicula_id="+parseInt(pelicula.id)+") AP ON A.id = AP.actor_id;"
+  
+            db.query(sentenceGetActores, function(error, actoresResult, fields){
+              if(error){
+                console.log("Error found at Get Actores query", error.message);
+                return res.status(404).send("Actores not found");
+              }else{
+                const actores = actoresResult;
+
+                const response = {
+                  pelicula: pelicula,
+                  genero: genero,
+                  actores: actores
+                };
+                res.status(200).send(JSON.stringify(response));
+              }
+            })
+
+          }
+
+        })
+
+        
+      }
+    })
+
+
+  }
 }
 
 module.exports = Controller;
