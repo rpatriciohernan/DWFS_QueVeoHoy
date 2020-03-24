@@ -4,13 +4,13 @@ $(document).ready(function() {
     //se hace el pedido al backend de todos los generos para cargalos en el listado de géneros
     $.getJSON(servidor + "/generos",
         function(data) {
-            for (i = 0; i < data.generos.length; i++) {
+            for (var i = 0; i < data.generos.length; i++) {
                 //se duplica una opcion de la lista de selección
                 var opcion = $(".genero-select option[value='0']").clone();
                 //a esa opcion se le asigna como valor el id del genero, dato que luego va a servir para filtrar por id de genero.
-                opcion.attr("value", (data.generos)[i].id);
+                opcion.attr("value", data.generos[i].id);
                 //se le pone el nombre del genero al texto de la opcion
-                opcion.html((data.generos)[i].nombre);
+                opcion.html(data.generos[i].nombre);
                 //se agrega la opcion a la lista de seleccion
                 $(".genero-select").append(opcion);
             }
