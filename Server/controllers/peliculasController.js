@@ -81,6 +81,99 @@ function createQuerySentenceToCountValues(req) {
   return sentence;
 };
 
+function createSentenceForRecomendacionWithoutGenero(req){
+  const anio_inicio = req.query.anio_inicio;
+  const anio_fin = req.query.anio_fin;
+  const puntuacion = req.query.puntuacion;
+
+  const aniosDefined = typeof anio_inicio !== 'undefined' && anio_fin !== 'undefined';
+  const puntuacionDefined = typeof puntuacion !== 'undefined';
+
+  var sentence = "SELECT p.id, p.titulo, p.director, p.anio, p.fecha_lanzamiento, p.poster, p.trama, g.nombre FROM pelicula p INNER JOIN genero g ON p.genero_id = g.id"
+
+  if (aniosDefined) {
+    sentence += " WHERE anio>= "+parseInt(anio_inicio)+" AND anio<="+parseInt(anio_fin);
+    if(puntuacionDefined){ sentence += " AND puntuacion>="+parseInt(puntuacion)};
+  } else {
+    if(puntuacionDefined){
+      sentence += " WHERE puntuacion>="+parseInt(puntuacion);
+      if(generoDefined){ sentence += " AND genero_id="+generoId};
+    };
+  }
+
+  return sentence;
+}
+
+function executeRecomendacionQueryWithoutGenero(req, res) {
+
+  const sentence = createSentenceForRecomendacionWithoutGenero(req);
+
+  db.query(sentence, function(error, result, fields){
+    if(error){
+      console.log("Error found at Get Recomendacion without Genero", error.message);
+      return res.status(404).send("Recomendacion without Genero not found");
+    }else{
+      const response = {
+        peliculas: result
+      };
+      res.status(200).send(JSON.stringify(response));
+    }
+  })
+}
+
+function createSentenceForRecomendacionWithGenero(req, generoId){
+  const anio_inicio = req.query.anio_inicio;
+  const anio_fin = req.query.anio_fin;
+  const puntuacion = req.query.puntuacion;
+
+  const aniosDefined = typeof anio_inicio !== 'undefined' && anio_fin !== 'undefined';
+  const puntuacionDefined = typeof puntuacion !== 'undefined';
+
+  var sentence = "SELECT p.id, p.titulo, p.director, p.anio, p.fecha_lanzamiento, p.poster, p.trama, g.nombre FROM pelicula p INNER JOIN genero g ON p.genero_id = g.id"
+
+  if (aniosDefined) {
+    sentence += " WHERE anio>= "+parseInt(anio_inicio)+" AND anio<="+parseInt(anio_fin);
+    if(puntuacionDefined){ sentence += " AND puntuacion>="+parseInt(puntuacion)};
+    sentence += " AND genero_id="+generoId;
+  } else {
+    if(puntuacionDefined){
+      sentence += " WHERE puntuacion>="+parseInt(puntuacion);
+      sentence += " AND genero_id="+generoId;
+    }else {
+     sentence += " WHERE genero_id="+generoId;
+    };
+  }
+
+  return sentence;
+}
+
+function executeRecomendacionQueryWithGenero(req, res) {
+const generoNombre = req.query.genero;
+const generoSentence = "SELECT * FROM QUEVEOHOY.genero WHERE nombre ='"+generoNombre+"';";
+
+db.query(generoSentence, function(error, generoResult, fields){
+  if(error){
+    console.log("Error found at Get Genero for Recomendacion", error.message);
+    return res.status(404).send("Genero for Recomendacion not found");
+  }else{
+    const generoId = generoResult[0].id;
+    const sentence = createSentenceForRecomendacionWithGenero(req, generoId);
+
+    db.query(sentence, function(error, result, fields){
+      if(error){
+        console.log("Error found at Get Recomendacion with Genero", error.message);
+        return res.status(404).send("Recomendacion with Genero not found");
+      }else{
+        const response = {
+          peliculas: result
+        };
+        res.status(200).send(JSON.stringify(response));
+      }
+    })
+  }
+})
+}
+
 // CONTROLLER DEFINITION
 class Controller {
   constructor() { }
@@ -148,15 +241,22 @@ class Controller {
                 res.status(200).send(JSON.stringify(response));
               }
             })
-
           }
-
         })
-
-        
       }
     })
+  }
 
+  getRecomendacion(req, res){
+    
+    const generoNombre = req.query.genero;
+    const generoDefined = typeof generoNombre !== 'undefined';
+
+    if (generoDefined) { 
+      executeRecomendacionQueryWithGenero(req, res)
+    } else {
+      executeRecomendacionQueryWithoutGenero(req, res)
+    };
 
   }
 }
